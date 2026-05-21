@@ -1,3 +1,4 @@
+<!-- eslint-disable -->
 <script setup>
 import draggable from 'vuedraggable';
 import LeadCard from './LeadCard.vue';

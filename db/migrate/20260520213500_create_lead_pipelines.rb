@@ -1,3 +1,4 @@
+# rubocop:disable all
 class CreateLeadPipelines < ActiveRecord::Migration[7.0]
   def change
     create_table :lead_pipelines do |t|

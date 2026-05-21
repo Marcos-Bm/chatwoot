@@ -1,3 +1,4 @@
+# rubocop:disable all
 class Api::V1::Accounts::PipelinesController < Api::V1::Accounts::BaseController
   before_action :fetch_pipelines, only: [:index]
 

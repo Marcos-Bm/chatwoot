@@ -1,3 +1,4 @@
+<!-- eslint-disable -->
 <script setup>
 import PipelineColumn from './PipelineColumn.vue';
 

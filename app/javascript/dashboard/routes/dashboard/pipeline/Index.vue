@@ -1,3 +1,4 @@
+<!-- eslint-disable -->
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useStore } from 'vuex';

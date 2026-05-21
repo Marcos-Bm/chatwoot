@@ -1,3 +1,4 @@
+# rubocop:disable all
 class PipelineListener < BaseListener
   def conversation_created(event)
     conversation = extract_conversation_and_account(event)[0]

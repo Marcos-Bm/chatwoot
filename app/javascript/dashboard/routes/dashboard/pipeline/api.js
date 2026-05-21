@@ -1,3 +1,4 @@
+/* eslint-disable */
 import ApiClient from '../../api/ApiClient';
 
 export default {

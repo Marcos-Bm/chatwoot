@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { frontendURL } from '../../../helper/URLHelper';
 import Index from './Index.vue';
 

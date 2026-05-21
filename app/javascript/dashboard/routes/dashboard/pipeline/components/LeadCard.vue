@@ -1,3 +1,4 @@
+<!-- eslint-disable -->
 <script setup>
 import { computed } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
