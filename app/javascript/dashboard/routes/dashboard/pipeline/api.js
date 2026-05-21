@@ -1,17 +1,14 @@
 /* eslint-disable */
 import ApiClient from 'dashboard/api/ApiClient';
 
-export default {
-  get(accountId) {
-    return ApiClient.get(`/api/v1/accounts/${accountId}/pipelines`);
-  },
-  
-  // A atualização do estágio é feita atualizando as labels da conversa,
-  // portanto não precisamos de um endpoint específico para update aqui.
-  // O backend escuta o evento de label alterada e atualiza a pipeline.
-  updateLabels(accountId, conversationId, labels) {
-    return ApiClient.post(`/api/v1/accounts/${accountId}/conversations/${conversationId}/labels`, {
-      labels
-    });
+class PipelineAPI extends ApiClient {
+  constructor() {
+    super('pipelines', { accountScoped: true });
   }
-};
+
+  updateLabels(accountId, conversationId, labels) {
+    return window.axios.post(`/api/v1/accounts/${accountId}/conversations/${conversationId}/labels`, { labels });
+  }
+}
+
+export default new PipelineAPI();
