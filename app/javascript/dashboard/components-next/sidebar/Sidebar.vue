@@ -346,6 +346,13 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'Pipeline',
+      label: 'Pipeline',
+      icon: 'i-lucide-trello',
+      to: accountScopedRoute('pipeline_index'),
+      activeOn: ['pipeline_index'],
+    },
+    {
       name: 'Captain',
       icon: 'i-woot-captain',
       label: t('SIDEBAR.CAPTAIN'),

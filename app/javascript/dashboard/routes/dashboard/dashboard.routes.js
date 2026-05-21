@@ -13,6 +13,7 @@ import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import NoAccounts from './noAccounts/Index.vue';
 import OnboardingAccountDetails from './onboarding/Index.vue';
+import pipelineRoutes from './pipeline/pipeline.routes';
 
 export default {
   routes: [
@@ -30,6 +31,7 @@ export default {
         ...notificationRoutes,
         ...helpcenterRoutes.routes,
         ...campaignsRoutes.routes,
+        ...pipelineRoutes.routes,
       ],
     },
     {
