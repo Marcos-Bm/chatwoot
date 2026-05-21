@@ -15,14 +15,14 @@ class Api::V1::Accounts::PipelinesController < Api::V1::Accounts::BaseController
           score: pipeline.score,
           updated_at: pipeline.updated_at,
           # Campos calculados da conversation / contact
-          contact_name: pipeline.contact.name,
-          contact_avatar: pipeline.contact.avatar_url,
-          contact_phone_number: pipeline.contact.phone_number,
-          inbox_name: pipeline.conversation.inbox&.name,
+          contact_name: pipeline.contact&.name,
+          contact_avatar: pipeline.contact&.avatar_url,
+          contact_phone_number: pipeline.contact&.phone_number,
+          inbox_name: pipeline.conversation&.inbox&.name,
           assignee_name: pipeline.assigned_user&.name,
-          labels: pipeline.conversation.labels.pluck(:title),
-          last_activity_at: pipeline.conversation.last_activity_at,
-          messages_preview: pipeline.conversation.messages.last&.content
+          labels: pipeline.conversation&.labels&.pluck(:title) || [],
+          last_activity_at: pipeline.conversation&.last_activity_at,
+          messages_preview: pipeline.conversation&.messages&.last&.content
         }
       end
     end
