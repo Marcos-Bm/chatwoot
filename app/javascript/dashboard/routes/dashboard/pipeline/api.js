@@ -1,5 +1,5 @@
 /* eslint-disable */
-import ApiClient from '../../api/ApiClient';
+import ApiClient from 'dashboard/api/ApiClient';
 
 export default {
   get(accountId) {
