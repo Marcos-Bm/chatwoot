@@ -1,5 +1,5 @@
-<!-- eslint-disable -->
 <script setup>
+/* eslint-disable */
 import PipelineColumn from './PipelineColumn.vue';
 
 const props = defineProps({

@@ -1,5 +1,5 @@
-<!-- eslint-disable -->
 <script setup>
+/* eslint-disable */
 import { computed } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

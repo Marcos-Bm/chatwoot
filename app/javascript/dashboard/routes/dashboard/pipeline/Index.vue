@@ -1,5 +1,5 @@
-<!-- eslint-disable -->
 <script setup>
+/* eslint-disable */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useAccount } from 'dashboard/composables/useAccount';
