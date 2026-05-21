@@ -6,6 +6,12 @@ class PipelineListener < BaseListener
   end
 
   def conversation_updated(event)
+  end
+
+  def message_created(event)
+    message = event.data[:message]
+    # Ignorar mensagens privadas (notas internas) se preferir, ou manter todas para tracking.
+    sync_pipeline(message.conversation) if message.conversation.present?
     conversation = extract_conversation_and_account(event)[0]
     sync_pipeline(conversation)
   end

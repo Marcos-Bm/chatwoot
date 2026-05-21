@@ -1,8 +1,6 @@
-<script setup>
 /* eslint-disable */
+<script setup>
 import { computed } from 'vue';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 const props = defineProps({
   card: {
@@ -11,89 +9,102 @@ const props = defineProps({
   },
 });
 
-const formattedLastActivity = computed(() => {
-  if (!props.card.last_activity_at) return 'Sem atividade';
-  return formatDistanceToNow(new Date(props.card.last_activity_at * 1000), { addSuffix: true, locale: ptBR });
+const initials = computed(() => {
+  const name = props.card.contact_name || 'Desconhecido';
+  const parts = name.split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
 });
 
-const formattedUpdatedAt = computed(() => {
-  if (!props.card.updated_at) return '';
-  return formatDistanceToNow(new Date(props.card.updated_at), { addSuffix: true, locale: ptBR });
+const timeAgo = computed(() => {
+  if (!props.card.last_activity_at) return '';
+  const date = new Date(props.card.last_activity_at);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now - date) / 60000);
+  
+  if (diffInMinutes < 60) return `${diffInMinutes}m atrás`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h atrás`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d atrás`;
 });
 
-const timeInStage = computed(() => {
-  if (!props.card.updated_at) return '';
-  return formatDistanceToNow(new Date(props.card.updated_at), { locale: ptBR });
+const displayLabels = computed(() => {
+  // Filtra as labels de pipeline para não poluir visualmente, exibe apenas as outras tags
+  return (props.card.labels || []).filter(l => !l.startsWith('pipeline:'));
 });
 
-const priorityColor = computed(() => {
-  // Mock logic based on score or tags if available, using a default visual for now
-  if (props.card.score > 50) return 'bg-n-red-5 border-n-red-8';
-  if (props.card.score > 20) return 'bg-n-yellow-5 border-n-yellow-8';
-  return 'bg-n-background border-n-weak';
+// A cor da borda pode indicar se está "quente" (atualizado recentemente)
+const cardPriorityClass = computed(() => {
+  if (!props.card.last_activity_at) return 'border-n-weak border-l-4 border-l-n-weak';
+  
+  const date = new Date(props.card.last_activity_at);
+  const diffInHours = (new Date() - date) / 3600000;
+  
+  if (diffInHours < 2) return 'border-n-weak border-l-4 border-l-green-500'; // Hot
+  if (diffInHours < 24) return 'border-n-weak border-l-4 border-l-blue-400'; // Warm
+  return 'border-n-weak border-l-4 border-l-gray-400'; // Cold
 });
+
 </script>
 
 <template>
   <div 
-    class="lead-card p-3 rounded-md shadow-sm border cursor-grab hover:shadow-md transition-shadow relative"
-    :class="priorityColor"
+    class="bg-white dark:bg-n-solid-2 rounded-md shadow-sm border p-3 cursor-grab hover:shadow-md transition-shadow"
+    :class="cardPriorityClass"
   >
-    <div class="flex items-start gap-3 mb-2">
-      <img 
-        v-if="card.contact_avatar" 
-        :src="card.contact_avatar" 
-        alt="Avatar" 
-        class="w-10 h-10 rounded-full object-cover border border-n-weak"
-      />
-      <div v-else class="w-10 h-10 rounded-full bg-n-brand-6 text-white flex items-center justify-center font-bold text-sm">
-        {{ card.contact_name?.charAt(0)?.toUpperCase() || 'U' }}
+    <!-- Header: Avatar + Nome + Origem -->
+    <div class="flex items-center gap-3 mb-2">
+      <div class="flex-shrink-0">
+        <img 
+          v-if="card.contact_avatar" 
+          :src="card.contact_avatar" 
+          class="w-8 h-8 rounded-full object-cover"
+        />
+        <div v-else class="w-8 h-8 rounded-full bg-n-brand text-white flex items-center justify-center text-xs font-medium">
+          {{ initials }}
+        </div>
       </div>
-      
       <div class="flex-1 min-w-0">
-        <h4 class="font-medium text-sm text-n-slate-12 truncate">{{ card.contact_name || 'Desconhecido' }}</h4>
-        <div class="text-xs text-n-slate-10 truncate">{{ card.contact_phone_number || 'Sem telefone' }}</div>
+        <h4 class="text-sm font-semibold text-n-slate-12 truncate">{{ card.contact_name || 'Desconhecido' }}</h4>
+        <div class="flex items-center text-xs text-n-slate-11 gap-1">
+          <span class="i-lucide-smartphone w-3 h-3"></span>
+          <span class="truncate">{{ card.contact_phone_number || 'Sem telefone' }}</span>
+        </div>
       </div>
     </div>
-    
-    <div class="text-xs text-n-slate-11 mb-2 bg-n-surface-2 p-2 rounded line-clamp-2 italic">
-      "{{ card.messages_preview || 'Sem mensagens' }}"
+
+    <!-- Message Preview -->
+    <div class="mb-2 bg-n-alpha-1 p-2 rounded text-xs text-n-slate-12 line-clamp-2">
+      {{ card.messages_preview || 'Nenhuma mensagem recente' }}
     </div>
-    
-    <div class="flex flex-wrap gap-1 mb-2">
-      <span 
-        v-for="label in card.labels" 
-        :key="label" 
-        class="text-[10px] px-1.5 py-0.5 rounded-sm bg-n-slate-3 text-n-slate-11"
-      >
-        {{ label.replace('pipeline:', '') }}
+
+    <!-- Metadata: Assignee & Time -->
+    <div class="flex items-center justify-between text-xs text-n-slate-11 mb-2">
+      <div class="flex items-center gap-1">
+        <span class="i-lucide-user w-3 h-3"></span>
+        <span class="truncate max-w-[80px]">{{ card.assignee_name || 'Não atribuído' }}</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span class="i-lucide-clock w-3 h-3"></span>
+        <span>{{ timeAgo }}</span>
+      </div>
+    </div>
+
+    <!-- Footer: Labels e Inbox -->
+    <div class="flex flex-wrap items-center gap-1 mt-2 pt-2 border-t border-n-weak">
+      <span class="text-[10px] bg-n-alpha-2 text-n-slate-11 px-1.5 py-0.5 rounded flex items-center gap-1">
+        <span class="i-lucide-inbox w-3 h-3"></span>
+        {{ card.inbox_name || 'Indefinido' }}
       </span>
-    </div>
-    
-    <div class="flex justify-between items-end mt-3 border-t border-n-weak pt-2">
-      <div class="flex flex-col gap-0.5">
-        <div class="flex items-center gap-1 text-[10px] text-n-slate-10">
-          <span class="i-lucide-clock size-3"></span>
-          Últ. Interação: {{ formattedLastActivity }}
-        </div>
-        <div class="flex items-center gap-1 text-[10px] text-n-slate-10">
-          <span class="i-lucide-hourglass size-3"></span>
-          No estágio há: {{ timeInStage }}
-        </div>
-      </div>
       
-      <div v-if="card.assignee_name" class="text-[10px] px-1.5 py-0.5 bg-n-brand-3 text-n-brand-11 rounded-sm max-w-[80px] truncate" title="Responsável">
-        {{ card.assignee_name }}
-      </div>
+      <span 
+        v-for="label in displayLabels" 
+        :key="label"
+        class="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-1.5 py-0.5 rounded truncate max-w-[60px]"
+      >
+        {{ label }}
+      </span>
     </div>
   </div>
 </template>
-
-<style scoped>
-.lead-card {
-  user-select: none;
-}
-.lead-card:active {
-  cursor: grabbing;
-}
-</style>

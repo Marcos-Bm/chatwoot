@@ -1,5 +1,5 @@
-<script setup>
 /* eslint-disable */
+<script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -35,51 +35,67 @@ const fetchPipeline = async () => {
 };
 
 const handleCardMoved = async ({ card, newStage, oldStage }) => {
-  // Otimisticamente move o card localmente
   const oldList = pipelineData.value[oldStage];
-  const newList = pipelineData.value[newStage];
+  const newList = pipelineData.value[newStage] || [];
   
-  if (!newList || !oldList) return;
+  if (!oldList) return;
   
+  // Otimista
   pipelineData.value[oldStage] = oldList.filter(c => c.id !== card.id);
   pipelineData.value[newStage] = [card, ...newList];
 
-  // Remove a label antiga e adiciona a nova
   const oldLabel = `pipeline:${oldStage}`;
   const newLabel = `pipeline:${newStage}`;
   
   const currentLabels = card.labels || [];
-  const updatedLabels = currentLabels.filter(l => l !== oldLabel);
+  const updatedLabels = currentLabels.filter(l => l !== oldLabel && l !== newLabel);
   updatedLabels.push(newLabel);
 
   try {
     await pipelineApi.updateLabels(accountId.value, card.conversation_id, updatedLabels);
-    // Atualiza as labels no card otimista
     card.labels = updatedLabels;
   } catch (error) {
     useAlert('Erro ao atualizar estágio do lead. Revertendo...');
-    // Reverte a alteração otimista
     fetchPipeline();
   }
 };
 
-// Polling simples para manter atualizado (numa v2 usaria o listener do bus de eventos do Chatwoot)
-let pollInterval;
+// Debounce helper
+let timeoutId = null;
+const debouncedFetchPipeline = () => {
+  if (timeoutId) clearTimeout(timeoutId);
+  timeoutId = setTimeout(() => {
+    fetchPipeline();
+  }, 1000); // 1s debounce
+};
+
+let unsubscribe;
 
 onMounted(() => {
   fetchPipeline();
-  pollInterval = setInterval(fetchPipeline, 30000); // 30 segundos
+  
+  // Escuta todas as mutações do Vuex (as mensagens e labels chegam via ActionCable e atualizam o Vuex)
+  unsubscribe = store.subscribe((mutation, state) => {
+    // Se houve atualização em conversas, labels, ou mensagens
+    if (
+      mutation.type.includes('conversations/') ||
+      mutation.type.includes('messages/')
+    ) {
+      debouncedFetchPipeline();
+    }
+  });
 });
 
 onUnmounted(() => {
-  clearInterval(pollInterval);
+  if (unsubscribe) unsubscribe();
+  if (timeoutId) clearTimeout(timeoutId);
 });
 
 </script>
 
 <template>
   <div class="pipeline-container flex flex-col h-full w-full bg-n-background">
-    <div class="pipeline-header p-4 border-b border-n-weak flex justify-between items-center">
+    <div class="pipeline-header p-4 border-b border-n-weak flex justify-between items-center bg-white dark:bg-n-solid-1 shadow-sm z-10">
       <h1 class="text-2xl font-semibold text-n-slate-12">Pipeline de Leads</h1>
       <button 
         @click="fetchPipeline" 
@@ -91,7 +107,7 @@ onUnmounted(() => {
       </button>
     </div>
     
-    <div class="pipeline-board flex-1 overflow-x-auto p-4">
+    <div class="pipeline-board flex-1 overflow-x-auto p-4 custom-scrollbar">
       <KanbanBoard 
         v-if="!isLoading || Object.keys(pipelineData).length > 0"
         :stages="stages"
@@ -108,5 +124,16 @@ onUnmounted(() => {
 <style scoped>
 .pipeline-container {
   height: 100%;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-6);
+  border-radius: 4px;
 }
 </style>
